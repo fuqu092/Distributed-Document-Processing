@@ -1,5 +1,4 @@
 .env*
 Kafka Commands.txt
 exp
-worker
 __pycache__
