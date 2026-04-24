@@ -1,10 +1,30 @@
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-import boto3
 from botocore.exceptions import ClientError
+from kafka import KafkaProducer
+from dotenv import load_dotenv
+from pathlib import Path
+import boto3
+import json
+import uuid
+import os
 
 load_dotenv()
+
+def send_pdf_process_message(pdf_name):
+    producer = KafkaProducer(
+        bootstrap_servers=['localhost:9092'],
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')  # Serialize data to JSON
+    )
+
+    message = {
+        "req_id": str(uuid.uuid4()),
+        "pdf_name": pdf_name,
+    }
+
+    producer.send(os.getenv("KAFKA_TOPIC_NAME"), message)
+    print(f'Message sent for {pdf_name}')
+
+    return True
+
 
 def check_pdf(pdf_path):
     if pdf_path.is_file() == False:
@@ -45,4 +65,8 @@ def upload_pdf(pdf_name):
     if pdf_check_response == False:
         return False
 
-    return upload_pdf_to_aws(pdf_path)
+    pdf_upload_response = upload_pdf_to_aws(pdf_path)
+    if pdf_upload_response == False:
+        return False
+    
+    return send_pdf_process_message(str(pdf_name))
