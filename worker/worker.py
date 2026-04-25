@@ -10,19 +10,6 @@ import os
 
 load_dotenv()
 
-def get_request():
-    consumer = KafkaConsumer(
-        'test2',
-        bootstrap_servers=['localhost:9092'],
-        auto_offset_reset='earliest',
-        enable_auto_commit=True,
-        group_id='location-group',
-        value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-    )
-
-    for message in consumer:
-        return message.value["req_id"], message.value["pdf_name"]
-
 def get_summary(prompt):
     invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
     stream = False
@@ -92,20 +79,37 @@ def index_document(req_id, summary):
         id = req_id,
         refresh = True
     )
-    print(req_id)
+    
     print("Document indexed in opensearch")
 
 def main():
-    req_id, pdf_name = get_request()
-    response = get_text(pdf_name)
-    if response == None:
-        print(f"Error Downloading {pdf_name}")
-        return None
-    
-    prompt = response + "\n\nGenerate a 3 line summary of the above text\n"
-    summary = get_summary(prompt)
+    consumer = KafkaConsumer(
+        'test2',
+        bootstrap_servers=['localhost:9092'],
+        auto_offset_reset='earliest',
+        enable_auto_commit=True,
+        group_id='location-group',
+        value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+    )
 
-    index_document(req_id, summary)
+    for message in consumer:
+        req_id = message.value["req_id"]
+        pdf_name = message.value["pdf_name"]
+
+        response = get_text(pdf_name)
+        if response is None:
+            print(f"Error Downloading {pdf_name}")
+            continue
+
+        prompt = response + "\n\nGenerate a 3 line summary of the above text\n"
+        summary = get_summary(prompt)
+
+        try:
+            summary = get_summary(prompt)
+            index_document(req_id, summary)
+            consumer.commit()
+        except Exception as e:
+            print(f"Error processing {req_id}: {e}")
 
 if __name__ == "__main__":
     main()
