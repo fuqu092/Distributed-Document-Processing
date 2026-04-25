@@ -1,3 +1,4 @@
+from opensearchpy import OpenSearch
 from kafka import KafkaConsumer
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
@@ -9,7 +10,7 @@ import os
 
 load_dotenv()
 
-def get_pdf_name():
+def get_request():
     consumer = KafkaConsumer(
         'test2',
         bootstrap_servers=['localhost:9092'],
@@ -20,7 +21,7 @@ def get_pdf_name():
     )
 
     for message in consumer:
-        return message.value["pdf_name"]
+        return message.value["req_id"], message.value["pdf_name"]
 
 def get_summary(prompt):
     invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
@@ -73,15 +74,38 @@ def get_text(pdf_name):
         print(f"Error: {e}")
         return None
 
+def index_document(req_id, summary):
+    db_client = OpenSearch(
+        hosts=[{'host': os.getenv("OS_DOMAIN"), 'port': 443}],
+        http_auth=(os.getenv("OS_USERNAME"), os.getenv("OS_PASSWORD")),
+        use_ssl=True,
+        verify_certs=True
+    )
+
+    document = {
+        "summary" : summary
+    }
+
+    db_client.index(
+        index = "test",
+        body = document,
+        id = req_id,
+        refresh = True
+    )
+    print(req_id)
+    print("Document indexed in opensearch")
+
 def main():
-    pdf_name = get_pdf_name()
+    req_id, pdf_name = get_request()
     response = get_text(pdf_name)
     if response == None:
         print(f"Error Downloading {pdf_name}")
         return None
     
     prompt = response + "\n\nGenerate a 3 line summary of the above text\n"
-    print(get_summary(prompt))
+    summary = get_summary(prompt)
+
+    index_document(req_id, summary)
 
 if __name__ == "__main__":
     main()
