@@ -1,5 +1,9 @@
 .env*
-Kafka Commands.txt
-exp
+commands.txt
 __pycache__
 .vscode
+test_pdfs
+stress_test_pdfs
+heavy_pdf_test
+arxiv_pdfs
+script.py

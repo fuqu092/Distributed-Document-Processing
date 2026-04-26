@@ -11,7 +11,7 @@ load_dotenv()
 
 def send_pdf_process_message(pdf_name):
     producer = KafkaProducer(
-        bootstrap_servers=['localhost:9092'],
+        bootstrap_servers=['kafka:9092'],
         value_serializer=lambda v: json.dumps(v).encode('utf-8')  # Serialize data to JSON
     )
 
@@ -20,18 +20,21 @@ def send_pdf_process_message(pdf_name):
         "pdf_name": pdf_name,
     }
 
-    producer.send(os.getenv("KAFKA_TOPIC_NAME"), message)
-    print(f'Message sent for {pdf_name}')
+    producer.send(
+        os.getenv("KAFKA_TOPIC_NAME"),
+        key=message["req_id"].encode('utf-8'),
+        value=message
+    )
+    print(f'Message sent for {pdf_name}', flush=True)
 
     return True
 
-
 def check_pdf(pdf_path):
     if pdf_path.is_file() == False:
-        print("PDF doesn't exist!!!")
+        print("PDF doesn't exist!!!", flush=True)
         return False
     if pdf_path.suffix.lower() != ".pdf":
-        print("Enter a valid PDF!!!")
+        print("Enter a valid PDF!!!", flush=True)
         return False
 
     return True
@@ -48,9 +51,9 @@ def upload_pdf_to_aws(pdf_path):
 
     try:
         response = s3_client.upload_file(pdf_path_str, os.getenv("AWS_S3_BUCKET_NAME"), pdf_path_str)
-        print(f'File uploading response: {response}')
+        print(f'File uploading response: {response}', flush=True)
     except ClientError as e:
-        print(f'File uploading error: {e}')
+        print(f'File uploading error: {e}', flush=True)
         return False
 
     return True
