@@ -11,7 +11,7 @@ load_dotenv()
 
 def send_pdf_process_message(pdf_name):
     producer = KafkaProducer(
-        bootstrap_servers=['kafka:9092'],
+        bootstrap_servers=['kafka-svc:9092'],
         value_serializer=lambda v: json.dumps(v).encode('utf-8')  # Serialize data to JSON
     )
 

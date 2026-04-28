@@ -1,0 +1,22 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker-scaledobject
+  namespace: cloud
+  labels:
+    deploymentName: worker-scaling
+spec:
+  scaleTargetRef:
+    name: worker-deployment
+  pollingInterval: 2
+  cooldownPeriod: 10
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka-svc.cloud:9092
+        consumerGroup: location-group
+        topic: test
+        lagThreshold: "1"
+        offsetResetPolicy: latest

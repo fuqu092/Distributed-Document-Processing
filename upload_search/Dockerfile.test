@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Make script executable
 RUN chmod +x entrypoint.sh
 
-CMD [ "python", "./main.py" ]
+CMD [ "python", "./test.py" ]

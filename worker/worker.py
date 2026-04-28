@@ -1,10 +1,8 @@
 from kafka import KafkaConsumer, ConsumerRebalanceListener
-from kafka import TopicPartition, OffsetAndMetadata
 from kafka.errors import CommitFailedError
 from opensearchpy import OpenSearch
 from botocore.config import Config
 from dotenv import load_dotenv
-from io import BytesIO
 import requests
 import boto3
 import fitz
@@ -40,7 +38,7 @@ db_client = OpenSearch(
 )
 
 consumer = KafkaConsumer(
-    bootstrap_servers='kafka:9092',
+    bootstrap_servers=' kafka-svc:9092',
     auto_offset_reset='earliest',
     enable_auto_commit=False,
     group_id='location-group',
