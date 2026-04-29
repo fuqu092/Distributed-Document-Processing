@@ -1,10 +1,11 @@
+# Use base Python image
 FROM python:3.11
 
-COPY . .
+# Copy repo into container
+COPY . . 
 
+# Install any requirements
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make script executable
-RUN chmod +x entrypoint.sh
-
-CMD [ "python", "./test.py" ]
+# Run Python program
+CMD [ "python", "./worker.py" ]

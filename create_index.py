@@ -13,7 +13,8 @@ index_body = {
     },
     "mappings" : {
         "properties" : {
-            "summary" : {"type" : "text"}
+            "summary" : {"type" : "text"},
+            "pdf_name": {"type" : "text"}
         }
     }
 }

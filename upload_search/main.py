@@ -1,4 +1,5 @@
 from upload import upload_pdf
+from search import search
 
 def main():
     print("Press 1 to upload new PDF.", flush=True)
@@ -17,7 +18,10 @@ def main():
             print("File uploaded successfully.", flush=True)
 
     elif option == "2":
-        print("Feature coming soon !!!", flush=True)
+        query = input("Enter your query: ")
+        num_results = int(input("Enter the maximum number of results you want: "))
+        search(num_results, query)
+
     else:
         print("Enter a valid input.", flush=True)
 

@@ -104,8 +104,9 @@ def get_summary(prompt):
         return None
 
 
-def index_document(req_id, summary):
+def index_document(req_id, pdf_name, summary):
     document = {
+        "pdf_name": pdf_name,
         "summary": summary
     }
     try:
@@ -159,14 +160,14 @@ def main():
 
             print(f"Text extracted", flush=True)
 
-            prompt = text[:5000] + "\n\nGenerate a 3 line summary\n"
+            prompt = text[:5000] + "\n\nGenerate a 3 line summary\n" + "\n\nYour output format: <summary generated>\n"
             summary = get_summary(prompt)
             if summary == None:
                 continue
 
             print(f"Summary generated", flush=True)
 
-            response = index_document(req_id, summary)
+            response = index_document(req_id, pdf_name, summary)
             if response == None:
                 continue
 
