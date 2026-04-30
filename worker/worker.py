@@ -3,7 +3,6 @@ from kafka.errors import CommitFailedError
 from opensearchpy import OpenSearch
 from botocore.config import Config
 from dotenv import load_dotenv
-import requests
 import boto3
 import fitz
 import time
@@ -37,8 +36,15 @@ db_client = OpenSearch(
     verify_certs=True
 )
 
+llm_client = boto3.client(
+    "bedrock-runtime",
+    region_name="ap-south-1",
+    aws_access_key_id=os.getenv("BEDROCK_ACCESS_KEY"),
+    aws_secret_access_key=os.getenv("BEDROCK_SECRET_ACCESS_KEY"),
+)
+
 consumer = KafkaConsumer(
-    bootstrap_servers=' kafka-svc:9092',
+    bootstrap_servers=['kafka-svc:9092'],
     auto_offset_reset='earliest',
     enable_auto_commit=False,
     group_id='location-group',
@@ -77,28 +83,17 @@ def get_text(pdf_name):
 
 
 def get_summary(prompt):
-    invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
-    stream = False
-
-    headers = {
-        "Authorization": os.getenv("NVIDIA_API_KEY"),
-        "Accept": "text/event-stream" if stream else "application/json"
-    }
-
-    payload = {
-        "model": "meta/llama-4-maverick-17b-128e-instruct",
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 512,
-        "temperature": 1.00,
-        "top_p": 1.00,
-        "frequency_penalty": 0.00,
-        "presence_penalty": 0.00,
-        "stream": stream
-    }
-
     try:
-        response = requests.post(invoke_url, headers=headers, json=payload, timeout=10)
-        return response.json()["choices"][0]["message"]["content"]
+        response = llm_client.converse( 
+            modelId="google.gemma-3-4b-it", 
+            messages=[ 
+                { 
+                    "role": "user", 
+                    "content": [{"text": "Write a one-sentence bedtime story about a unicorn."}]
+                } 
+            ] 
+        )
+        return response["output"]["message"]["content"][0]["text"]
     except Exception as e:
         print(f"Error getting summary: {e}", flush=True)
         return None
