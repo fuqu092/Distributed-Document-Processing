@@ -89,7 +89,7 @@ def get_summary(prompt):
             messages=[ 
                 { 
                     "role": "user", 
-                    "content": [{"text": "Write a one-sentence bedtime story about a unicorn."}]
+                    "content": [{"text": prompt}]
                 } 
             ] 
         )
